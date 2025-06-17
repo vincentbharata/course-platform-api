@@ -5,9 +5,9 @@ import com.example.course_platform.dto.AuthDto.AuthResponse;
 import com.example.course_platform.model.User;
 import com.example.course_platform.repository.UserRepository;
 import com.example.course_platform.security.JwtUtil;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-
-import java.util.Optional;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class UserService {
@@ -21,27 +21,27 @@ public class UserService {
     }
 
     public AuthResponse register(AuthRequest request) {
-    Optional<User> existingUser = userRepo.findByUsername(request.getUsername());
-    if (existingUser.isPresent()) {
-        throw new RuntimeException("Username already registered");
+        if (userRepo.findByUsername(request.getUsername()).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username already registered");
+        }
+
+        User user = new User();
+        user.setUsername(request.getUsername());
+        user.setPassword(request.getPassword()); // ⚠️ Sebaiknya hash password
+        user.setRole(request.getRole());
+
+        userRepo.save(user);
+
+        String token = jwtUtil.generateToken(user.getUsername());
+        return new AuthResponse(token);
     }
-
-    User user = new User();
-    user.setUsername(request.getUsername());
-    user.setPassword(request.getPassword());
-    user.setRole(request.getRole()); // Ambil dari request
-    userRepo.save(user);
-
-    String token = jwtUtil.generateToken(user.getUsername());
-    return new AuthResponse(token);
-}
 
     public AuthResponse login(AuthRequest request) {
         User user = userRepo.findByUsername(request.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
 
         if (!user.getPassword().equals(request.getPassword())) {
-            throw new RuntimeException("Invalid credentials");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
         }
 
         String token = jwtUtil.generateToken(user.getUsername());
