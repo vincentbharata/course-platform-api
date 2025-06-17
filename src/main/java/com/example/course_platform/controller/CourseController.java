@@ -3,7 +3,6 @@ package com.example.course_platform.controller;
 import java.security.Principal;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,8 +21,11 @@ import jakarta.validation.Valid;
 @RequestMapping("/courses")
 public class CourseController {
 
-    @Autowired
-    private CourseService courseService;
+    private final CourseService courseService;
+
+    public CourseController(CourseService courseService) {
+        this.courseService = courseService;
+    }
 
     @GetMapping
     public List<CourseResponse> getAllCourses() {
@@ -37,7 +39,7 @@ public class CourseController {
 
     @PostMapping
     public CourseResponse createCourse(@Valid @RequestBody CourseRequest req, Principal principal) {
-        String createdBy = principal.getName(); 
+        String createdBy = (principal != null) ? principal.getName() : "anonymous";
         return courseService.createCourse(req, createdBy);
     }
 
