@@ -1,0 +1,18 @@
+version: '3.1'
+
+services:
+  db:
+    image: postgres:15
+    container_name: course-app
+    restart: always
+    environment:
+      POSTGRES_DB: course_db
+      POSTGRES_USER: course_user
+      POSTGRES_PASSWORD: course_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
